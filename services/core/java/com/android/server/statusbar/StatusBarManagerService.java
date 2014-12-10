@@ -17,6 +17,7 @@
 package com.android.server.statusbar;
 
 import android.app.StatusBarManager;
+import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -555,6 +556,17 @@ public class StatusBarManagerService extends IStatusBarService.Stub {
             } catch (RemoteException ex) {}
         }
     }
+
+    @Override
+    public void showCustomIntentAfterKeyguard(Intent intent) {
+        enforceStatusBarService();
+        if (mBar != null) {
+            try {
+                mBar.showCustomIntentAfterKeyguard(intent);
+            } catch (RemoteException ex) {}
+        }
+    }
+
 
     private void enforceStatusBar() {
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.STATUS_BAR,
