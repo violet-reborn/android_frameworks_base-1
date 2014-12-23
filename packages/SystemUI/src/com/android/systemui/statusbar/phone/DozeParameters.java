@@ -80,11 +80,6 @@ public class DozeParameters {
     }
 
     public int getPulseInDuration(int reason) {
-        if (getOverwriteValue()) {
-            return Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.DOZE_PULSE_DURATION_IN, R.integer.doze_pulse_duration_in,
-                    UserHandle.USER_CURRENT);
-        }
         switch(reason) {
         case DozeLog.PULSE_REASON_SENSOR_PICKUP:
                 return getInt("doze.pulse.duration.in.pickup", R.integer.doze_pulse_duration_in_pickup);
@@ -151,6 +146,14 @@ public class DozeParameters {
 
     public PulseSchedule getPulseSchedule() {
         final String spec = getString("doze.pulse.schedule", R.string.doze_pulse_schedule);
+        if (sPulseSchedule == null || !sPulseSchedule.mSpec.equals(spec)) {
+            sPulseSchedule = PulseSchedule.parse(spec);
+        }
+        return sPulseSchedule;
+    }
+
+    public PulseSchedule getAlternatePulseSchedule() {
+        final String spec = getString("doze.pulse.schedule", R.string.doze_pulse_schedule_alternate);
         if (sPulseSchedule == null || !sPulseSchedule.mSpec.equals(spec)) {
             sPulseSchedule = PulseSchedule.parse(spec);
         }
