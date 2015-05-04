@@ -93,4 +93,8 @@ interface IStatusBarService
 
     void startAssist(in Bundle args);
     void showCustomIntentAfterKeyguard(inout Intent intent);
+    void setPieTriggerMask(int newMask, boolean lock);
+    void toggleLastApp();
+    void toggleKillApp();
+    void toggleScreenshot();
 }

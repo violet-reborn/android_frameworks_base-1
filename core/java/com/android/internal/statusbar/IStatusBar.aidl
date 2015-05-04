@@ -79,5 +79,9 @@ oneway interface IStatusBar
      */
     void onCameraLaunchGestureDetected(int source);
     void showCustomIntentAfterKeyguard(inout Intent intent);
+    void setPieTriggerMask(int newMask, boolean lock);
+    void toggleLastApp();
+    void toggleKillApp();
+    void toggleScreenshot();
 }
 

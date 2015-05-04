@@ -1272,6 +1272,12 @@ public interface WindowManagerPolicy {
     public void showGlobalActions();
 
     /**
+     * Toggle global menu
+     * @hide
+     */
+    public void toggleGlobalMenu();
+
+    /**
      * @return The current height of the input method window.
      */
     public int getInputMethodWindowVisibleHeightLw();

@@ -62,6 +62,7 @@ import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Bundle;
@@ -474,6 +475,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.BATTERY_SAVER_MODE_COLOR),
                     false, this, UserHandle.USER_ALL);
+            // Pie controls
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_CONTROLS), false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -490,8 +494,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                         mBatterySaverWarningColor = mContext.getResources()
                                 .getColor(com.android.internal.R.color.battery_saver_mode_color);
                     }
+            // Pie controls
+            if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.PIE_CONTROLS))) {
+                attachPieContainer(isPieEnabled());
             }
             update();
+            }
         }
 
         @Override
@@ -526,6 +535,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     Settings.System.STATUS_BAR_CRDROID_LOGO, 0, mCurrentUserId) == 1;
             showCrdroidLogo(mCrdroidLogo);
         }
+    }
+
+    // Pie controls
+    private boolean isPieEnabled() {
+        return Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.PIE_CONTROLS, 0,
+                UserHandle.USER_CURRENT) == 1;
     }
 
     // ensure quick settings is disabled until the current user makes it through the setup wizard
@@ -915,6 +931,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mNotificationPanelDebugText.setVisibility(View.VISIBLE);
         }
 
+        // Setup pie container if enabled
+        attachPieContainer(isPieEnabled());
+
         if (mNavigationBarView == null) {
             mNavigationBarView =
                 (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
@@ -929,6 +948,14 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 if (mAssistManager != null) {
                     mAssistManager.onConfigurationChanged();
                 }
+                mNotificationPanel.setQsScrimEnabled(!isVertical);
+            }
+        });
+        addNavigationBarCallback(mNavigationBarView);
+        mNavigationBarView.setOnVerticalChangedListener(
+                new NavigationBarView.OnVerticalChangedListener() {
+            @Override
+            public void onVerticalChanged(boolean isVertical) {
                 mNotificationPanel.setQsScrimEnabled(!isVertical);
             }
         });
@@ -1575,6 +1602,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         prepareNavigationBarView();
 
         mWindowManager.addView(mNavigationBarView, getNavigationBarLayoutParams());
+
+        // Pie controls
+        mNavigationBarOverlay.setNavigationBar(mNavigationBarView);
     }
 
     private void repositionNavigationBar() {
@@ -2369,8 +2399,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                         | StatusBarManager.DISABLE_RECENT
                         | StatusBarManager.DISABLE_BACK
                         | StatusBarManager.DISABLE_SEARCH)) != 0) {
-            // the nav bar will take care of these
-            if (mNavigationBarView != null) mNavigationBarView.setDisabledFlags(state1);
 
             if ((state1 & StatusBarManager.DISABLE_RECENT) != 0) {
                 // close recents if it's visible
@@ -2943,9 +2971,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         mNavigationIconHints = hints;
 
-        if (mNavigationBarView != null) {
-            mNavigationBarView.setNavigationIconHints(hints);
-        }
+        propagateNavigationIconHints(hints);
+
         checkBarModes();
     }
 
@@ -3234,9 +3261,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (DEBUG) {
             Log.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        if (mNavigationBarView != null) {
-            mNavigationBarView.setMenuVisibility(showMenu);
-        }
+
+        propagateMenuVisibility(showMenu);
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
@@ -3888,6 +3914,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (newTheme != null) mCurrentTheme = (ThemeConfig) newTheme.clone();
         if (updateStatusBar) {
             recreateStatusBar();
+            attachPieContainer(isPieEnabled());
 
             // detect crDroid logo state when theme change.
             mCrdroidLogo = Settings.System.getInt(
