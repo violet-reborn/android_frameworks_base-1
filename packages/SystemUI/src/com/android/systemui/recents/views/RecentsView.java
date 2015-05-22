@@ -21,6 +21,8 @@ import android.app.TaskStackBuilder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -352,6 +354,10 @@ public class RecentsView extends FrameLayout implements TaskStackView.TaskStackV
         boolean showClearAllRecents = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SHOW_CLEAR_ALL_RECENTS, 1) == 1;
 
+        final Resources res = getContext().getResources();
+        int mNavBarSize = res.getDimensionPixelSize(R.dimen.navigation_bar_size);
+        boolean isLandscape = res.getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+
         if (mClearRecents != null && showClearAllRecents) {
             int clearRecentsLocation = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.RECENTS_CLEAR_ALL_LOCATION, Constants.DebugFlags.App.RECENTS_CLEAR_ALL_TOP_RIGHT);
@@ -361,6 +367,24 @@ public class RecentsView extends FrameLayout implements TaskStackView.TaskStackV
             switch (clearRecentsLocation) {
                 case Constants.DebugFlags.App.RECENTS_CLEAR_ALL_TOP_LEFT:
                     params.gravity = Gravity.TOP | Gravity.LEFT;
+                    break;
+                case Constants.DebugFlags.App.RECENTS_CLEAR_ALL_BOTTOM_LEFT:
+                    params.gravity = Gravity.BOTTOM | Gravity.LEFT;
+                    if (!isLandscape) {
+                        params.bottomMargin = mNavBarSize;
+                    }
+                    break;
+                case Constants.DebugFlags.App.RECENTS_CLEAR_ALL_BOTTOM_RIGHT:
+                    params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+                    if (!isLandscape) {
+                        params.bottomMargin = mNavBarSize;
+                    }
+                    break;
+                case Constants.DebugFlags.App.RECENTS_CLEAR_ALL_BOTTOM_CENTER:
+                    params.gravity = Gravity.BOTTOM | Gravity.CENTER;
+                    if (!isLandscape) {
+                        params.bottomMargin = mNavBarSize;
+                    }
                     break;
                 case Constants.DebugFlags.App.RECENTS_CLEAR_ALL_TOP_RIGHT:
                 default:
@@ -373,10 +397,6 @@ public class RecentsView extends FrameLayout implements TaskStackView.TaskStackV
             } else {
                 // Adjust to task views
                 params.rightMargin = (width / 2) - (taskViewWidth / 2);
-
-                // If very close to the screen edge, align to it
-                if (params.rightMargin < mClearRecents.getWidth())
-                    params.rightMargin = width - taskStackBounds.right;
             }
             mClearRecents.setLayoutParams(params);
         } else {
