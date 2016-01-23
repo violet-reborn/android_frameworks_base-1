@@ -18,6 +18,8 @@ package com.android.systemui.statusbar.phone;
 
 import android.content.Context;
 import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.MathUtils;
@@ -66,6 +68,35 @@ public class DozeParameters {
         pw.print("    getPulseScheduleResets(): "); pw.println(getPulseScheduleResets());
         pw.print("    getPickupVibrationThreshold(): "); pw.println(getPickupVibrationThreshold());
         pw.print("    getPickupPerformsProxCheck(): "); pw.println(getPickupPerformsProxCheck());
+    }
+
+    public boolean getPocketMode() {
+        final int values = Settings.System.getIntForUser(mContext.getContentResolver(),
+               Settings.System.DOZE_POCKET_MODE, 0,
+                    UserHandle.USER_CURRENT);
+        return values != 0;
+    }
+
+    public boolean getShakeMode() {
+        final int values = Settings.System.getIntForUser(mContext.getContentResolver(),
+               Settings.System.DOZE_SHAKE_MODE, 0,
+                    UserHandle.USER_CURRENT);
+        return values != 0;
+    }
+
+    public boolean getTimeMode() {
+        final int values = Settings.System.getIntForUser(mContext.getContentResolver(),
+               Settings.System.DOZE_TIME_MODE, 0,
+                    UserHandle.USER_CURRENT);
+        return values != 0;
+    }
+
+    public boolean getFullMode() {
+        return getTimeMode() && getPocketMode();
+    }
+
+    public boolean getHalfMode() {
+        return !getTimeMode() && getPocketMode();
     }
 
     public boolean getDisplayStateSupported() {
@@ -127,11 +158,25 @@ public class DozeParameters {
     }
 
     public boolean getPulseOnNotifications() {
+        if (setUsingAccelerometerAsSensorPickUp()) {
+            final int values = Settings.System.getIntForUser(mContext.getContentResolver(),
+                   Settings.System.DOZE_PULSE_ON_NOTIFICATIONS, 1,
+                    UserHandle.USER_CURRENT);
+            return values != 0;
+        }
         return getBoolean("doze.pulse.notifications", R.bool.doze_pulse_on_notifications);
     }
 
     public PulseSchedule getPulseSchedule() {
         final String spec = getString("doze.pulse.schedule", R.string.doze_pulse_schedule);
+        if (sPulseSchedule == null || !sPulseSchedule.mSpec.equals(spec)) {
+            sPulseSchedule = PulseSchedule.parse(spec);
+        }
+        return sPulseSchedule;
+    }
+
+    public PulseSchedule getAlternatePulseSchedule() {
+        final String spec = getString("doze.pulse.schedule", R.string.doze_pulse_schedule_alternate);
         if (sPulseSchedule == null || !sPulseSchedule.mSpec.equals(spec)) {
             sPulseSchedule = PulseSchedule.parse(spec);
         }
@@ -144,6 +189,14 @@ public class DozeParameters {
 
     public int getPickupVibrationThreshold() {
         return getInt("doze.pickup.vibration.threshold", R.integer.doze_pickup_vibration_threshold);
+    }
+
+    public int getShakeAccelerometerThreshold() {
+        return getInt("doze.shake.acc.threshold", R.integer.doze_shake_accelerometer_threshold);
+    }
+
+    public boolean setUsingAccelerometerAsSensorPickUp() {
+        return getBoolean("doze.use.accelerometer", com.android.internal.R.bool.config_dozeUseAccelerometer);
     }
 
     private boolean getBoolean(String propName, int resId) {

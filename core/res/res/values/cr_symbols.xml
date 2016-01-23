@@ -20,4 +20,7 @@
   <!-- Hardware keys on/off option -->
   <java-symbol type="bool" name="config_hwKeysPref" />
 
+  <!-- Ambient display as active display -->
+  <java-symbol type="bool" name="config_dozeUseAccelerometer" />
+
 </resources>
