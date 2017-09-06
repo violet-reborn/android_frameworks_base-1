@@ -49,6 +49,7 @@ import com.android.systemui.qs.tiles.NightDisplayTile;
 import com.android.systemui.qs.tiles.ProfilesTile;
 import com.android.systemui.qs.tiles.ReadingModeTile;
 import com.android.systemui.qs.tiles.RotationLockTile;
+import com.android.systemui.qs.tiles.ScreenshotTile;
 import com.android.systemui.qs.tiles.SmartPixelsTile;
 import com.android.systemui.qs.tiles.SyncTile;
 import com.android.systemui.qs.tiles.UiModeNightTile;
@@ -235,6 +236,8 @@ public class QSFactoryImpl implements QSFactory {
                 return mVolumeTileProvider.get();
             case "smartpixels":
                 return new SmartPixelsTile(mHost);
+            case "screenshot":
+                return new ScreenshotTile(mHost);
         }
 
         // Intent tiles.
