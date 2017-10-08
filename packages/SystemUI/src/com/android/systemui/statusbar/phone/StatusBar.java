@@ -5423,14 +5423,14 @@ public class StatusBar extends SystemUI implements DemoMode,
                 setDoubleTapNavbar();
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN))) {
-                setLockscreenDoubleTapToSleep();
+                setStatusBarWindowViewOptions();
             }
         }
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
             setDoubleTapNavbar();
-            setLockscreenDoubleTapToSleep();
+            setStatusBarWindowViewOptions();
             mMaxKeyguardNotifConfig = Settings.System.getIntForUser(resolver,
                     Settings.System.LOCKSCREEN_MAX_NOTIF_CONFIG, 5, mCurrentUserId);
         }
@@ -5442,9 +5442,9 @@ public class StatusBar extends SystemUI implements DemoMode,
         }
     }
 
-    private void setLockscreenDoubleTapToSleep() {
+    private void setStatusBarWindowViewOptions() {
         if (mStatusBarWindow != null) {
-            mStatusBarWindow.setLockscreenDoubleTapToSleep();
+            mStatusBarWindow.setStatusBarWindowViewOptions();
         }
     }
 
