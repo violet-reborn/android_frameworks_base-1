@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources.Theme;
 import android.database.ContentObserver;
+import android.database.Cursor;
 import android.os.BaseBundle;
 import android.os.Binder;
 import android.os.Build;
@@ -119,11 +120,16 @@ import dalvik.system.VMRuntime;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+
+import lineageos.providers.LineageSettings;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -275,8 +281,8 @@ public final class SystemServer {
         }
         @Override
         public void onChange(boolean selfChange) {
-            int adbPort = Settings.Secure.getInt(mContentResolver,
-                Settings.Secure.ADB_PORT, 0);
+            int adbPort = LineageSettings.Secure.getInt(mContentResolver,
+                LineageSettings.Secure.ADB_PORT, 0);
             // setting this will control whether ADB runs on TCP/IP or USB
             SystemProperties.set("adb.network.port", Integer.toString(adbPort));
         }
@@ -733,6 +739,9 @@ public final class SystemServer {
         if (Build.IS_DEBUGGABLE && SystemProperties.getBoolean("debug.crash_system", false)) {
             throw new RuntimeException();
         }
+
+        String externalServer = context.getResources().getString(
+                org.lineageos.platform.internal.R.string.config_externalSystemServer);
 
         try {
             final String SECONDARY_ZYGOTE_PRELOAD = "SecondaryZygotePreload";
@@ -1522,13 +1531,13 @@ public final class SystemServer {
             }
         }
 
-        // make sure the ADB_ENABLED setting value matches the secure property value
-        Settings.Secure.putInt(mContentResolver, Settings.Secure.ADB_PORT,
+        // Make sure the ADB_ENABLED setting value matches the secure property value
+        LineageSettings.Secure.putInt(mContentResolver, LineageSettings.Secure.ADB_PORT,
                 Integer.parseInt(SystemProperties.get("service.adb.tcp.port", "-1")));
 
-        // register observer to listen for settings changes
+        // Register observer to listen for settings changes
         mContentResolver.registerContentObserver(
-            Settings.Secure.getUriFor(Settings.Secure.ADB_PORT),
+            LineageSettings.Secure.getUriFor(LineageSettings.Secure.ADB_PORT),
             false, new AdbPortObserver());
 
         // Before things start rolling, be sure we have decided whether
@@ -1560,6 +1569,24 @@ public final class SystemServer {
             traceBeginAndSlog("StartAutoFillService");
             mSystemServiceManager.startService(AUTO_FILL_MANAGER_SERVICE_CLASS);
             traceEnd();
+        }
+
+        final Class<?> serverClazz;
+        try {
+            serverClazz = Class.forName(externalServer);
+            final Constructor<?> constructor = serverClazz.getDeclaredConstructor(Context.class);
+            constructor.setAccessible(true);
+            final Object baseObject = constructor.newInstance(mSystemContext);
+            final Method method = baseObject.getClass().getDeclaredMethod("run");
+            method.setAccessible(true);
+            method.invoke(baseObject);
+        } catch (ClassNotFoundException
+                | IllegalAccessException
+                | InvocationTargetException
+                | InstantiationException
+                | NoSuchMethodException e) {
+            Slog.wtf(TAG, "Unable to start  " + externalServer);
+            Slog.wtf(TAG, e);
         }
 
         // It is now time to start up the app processes...
