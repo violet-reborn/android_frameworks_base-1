@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.OP_SYSTEM_ALERT_WINDOW;
 import static android.app.AppOpsManager.OP_TOAST_WINDOW;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
@@ -243,6 +244,7 @@ import android.service.dreams.IDreamManager;
 import android.service.vr.IPersistentVrStateCallbacks;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
+import android.util.BoostFramework;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
@@ -491,6 +493,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     private final Object mLock = new Object();
 
+    private static final boolean SCROLL_BOOST_SS_ENABLE =
+                    SystemProperties.getBoolean("vendor.perf.gestureflingboost.enable", false);
+
+    /*
+     * @hide
+     */
+    BoostFramework mPerfBoostDrag = null;
+    BoostFramework mPerfBoostFling = null;
+    BoostFramework mPerfBoostPrefling = null;
     Context mContext;
     IWindowManager mWindowManager;
     WindowManagerFuncs mWindowManagerFuncs;
@@ -516,6 +527,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private ScreenshotHelper mScreenshotHelper;
     private boolean mHasFeatureWatch;
     private boolean mHasFeatureLeanback;
+    private boolean mIsPerfBoostFlingAcquired;
 
     // Assigned on main thread, accessed on UI thread
     volatile VrManagerInternal mVrManagerInternal;
@@ -2466,6 +2478,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         handler.postDelayed(upRunnable, 10);
     }
 
+    private boolean isTopAppGame() {
+        boolean isGame = false;
+        try {
+            ActivityManager.RunningTaskInfo rti = ActivityManager.getService().getFilteredTasks(1,
+                                    ACTIVITY_TYPE_RECENTS, WINDOWING_MODE_UNDEFINED).get(0);
+            ApplicationInfo ai = mContext.getPackageManager().getApplicationInfo(
+                        rti.topActivity.getPackageName(), 0);
+            if(ai != null) {
+                isGame = (ai.category == ApplicationInfo.CATEGORY_GAME) ||
+                        ((ai.flags & ApplicationInfo.FLAG_IS_GAME) ==
+                            ApplicationInfo.FLAG_IS_GAME);
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return isGame;
+    }
+
     /** {@inheritDoc} */
     @Override
     public void init(Context context, IWindowManager windowManager,
@@ -2699,12 +2729,66 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         }
                     }
                     @Override
+                    public void onVerticalFling(int duration) {
+                        String currentPackage = mContext.getPackageName();
+                        boolean isGame = isTopAppGame();
+                        if (SCROLL_BOOST_SS_ENABLE && !isGame) {
+                            if (mPerfBoostFling == null) {
+                                mPerfBoostFling = new BoostFramework();
+                                mIsPerfBoostFlingAcquired = false;
+                            }
+                            if (mPerfBoostFling == null) {
+                                Slog.e(TAG, "Error: boost object null");
+                                return;
+                            }
+
+                            mPerfBoostFling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                currentPackage, duration + 160, BoostFramework.Scroll.VERTICAL);
+                            mIsPerfBoostFlingAcquired = true;
+                        }
+                    }
+                    @Override
+                    public void onScroll(boolean started) {
+                        String currentPackage = mContext.getPackageName();
+                        boolean isGame = isTopAppGame();
+                        if (mPerfBoostDrag == null) {
+                            mPerfBoostDrag = new BoostFramework();
+                        }
+                        if (mPerfBoostDrag == null) {
+                            Slog.e(TAG, "Error: boost object null");
+                            return;
+                        }
+                        if (SCROLL_BOOST_SS_ENABLE && !isGame) {
+                            if (mPerfBoostPrefling == null) {
+                                mPerfBoostPrefling = new BoostFramework();
+                            }
+                            if (mPerfBoostPrefling == null) {
+                                Slog.e(TAG, "Error: boost object null");
+                                return;
+                            }
+                            mPerfBoostPrefling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                    currentPackage, -1, BoostFramework.Scroll.PREFILING);
+                        }
+                        if (!isGame && started) {
+                            mPerfBoostDrag.perfHint(BoostFramework.VENDOR_HINT_DRAG_BOOST,
+                                            currentPackage, -1, 1);
+                        } else {
+                            mPerfBoostDrag.perfLockRelease();
+                        }
+                    }
+
+                    @Override
                     public void onDebug() {
                         // no-op
                     }
                     @Override
                     public void onDown() {
                         mOrientationListener.onTouchStart();
+                        if(SCROLL_BOOST_SS_ENABLE && mPerfBoostFling!= null
+                                            && mIsPerfBoostFlingAcquired) {
+                            mPerfBoostFling.perfLockRelease();
+                            mIsPerfBoostFlingAcquired = false;
+                        }
                     }
                     @Override
                     public void onUpOrCancel() {
