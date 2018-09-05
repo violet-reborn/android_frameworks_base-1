@@ -5735,6 +5735,12 @@ public final class Settings {
         public static final int LOCATION_MODE_HIGH_ACCURACY = 3;
 
         /**
+         * Add or remove software navigation bar
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_VISIBLE = "navigation_bar_visible";
+
+        /**
          * A flag containing settings used for biometric weak
          * @hide
          */
