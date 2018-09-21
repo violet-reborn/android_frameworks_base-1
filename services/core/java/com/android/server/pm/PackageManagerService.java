@@ -10688,6 +10688,15 @@ public class PackageManagerService extends IPackageManager.Stub
                     }
 
                     PackageParser.Package libPkg = mPackages.get(libEntry.apk);
+                    if (changingLib != null && changingLib.packageName.equals(libEntry.apk)) {
+                        // If we are doing this while in the middle of updating a library apk,
+                        // then we need to make sure to use that new apk for determining the
+                        // dependencies here.  (We haven't yet finished committing the new apk
+                        // to the package manager state.)
+                        if (libPkg == null || libPkg.packageName.equals(changingLib.packageName)) {
+                            libPkg = changingLib;
+                        }
+                    }
                     if (libPkg == null) {
                         throw new PackageManagerException(INSTALL_FAILED_MISSING_SHARED_LIBRARY,
                                 "Package " + packageName + " requires unavailable static shared"
@@ -10735,7 +10744,7 @@ public class PackageManagerService extends IPackageManager.Stub
     }
 
     private static boolean hasString(List<String> list, List<String> which) {
-        if (list == null) {
+        if (list == null || which == null) {
             return false;
         }
         for (int i=list.size()-1; i>=0; i--) {
@@ -10757,7 +10766,7 @@ public class PackageManagerService extends IPackageManager.Stub
                     && !hasString(pkg.usesOptionalLibraries, changingPkg.libraryNames)
                     && !ArrayUtils.contains(pkg.usesStaticLibraries,
                             changingPkg.staticSharedLibName)) {
-                return null;
+                continue;
             }
             if (res == null) {
                 res = new ArrayList<>();
