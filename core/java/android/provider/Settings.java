@@ -4681,11 +4681,6 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String SCREEN_STATE_TWOG = "screen_state_twog";
-
-        /**
-         * @hide
-         */
         public static final String SCREEN_STATE_GPS = "screen_state_gps";
 
         /**
