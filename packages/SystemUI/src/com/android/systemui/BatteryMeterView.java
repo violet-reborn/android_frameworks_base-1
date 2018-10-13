@@ -198,8 +198,8 @@ public class BatteryMeterView extends LinearLayout implements
                 break;
             default:
                 break;
-         }
-         updateShowPercent();
+        }
+        updateShowPercent();
     }
 
     private boolean isSymmetryBattery() {
@@ -301,25 +301,24 @@ public class BatteryMeterView extends LinearLayout implements
         if (mBatteryPercentView == null)
             return;
 
-        if (!mCharging || mStyle != BatteryMeterDrawableBase.BATTERY_STYLE_TEXT) {
-            mBatteryPercentView.setText(
-                    NumberFormat.getPercentInstance().format(mLevel / 100f));
-        } else {
+        String pct = NumberFormat.getPercentInstance().format(mLevel / 100f);
+
+        if (mCharging && mStyle == BatteryMeterDrawableBase.BATTERY_STYLE_TEXT
+                && mTextChargingSymbol > 0) {
             switch (mTextChargingSymbol) {
                 case 1:
-                    mBatteryPercentView.setText("⚡️" +
-                           NumberFormat.getPercentInstance().format(mLevel / 100f));
+                default:
+                    pct = "⚡️ " + pct;
                    break;
                 case 2:
-                    mBatteryPercentView.setText("~" +
-                           NumberFormat.getPercentInstance().format(mLevel / 100f));
-                    break;
-                default:
-                    mBatteryPercentView.setText(
-                           NumberFormat.getPercentInstance().format(mLevel / 100f));
+                    pct = "~ " + pct;
                     break;
             }
         }
+
+        if (mBatteryIconView != null) pct = pct + " ";
+
+        mBatteryPercentView.setText(pct);
     }
 
     private void updateShowPercent() {
@@ -339,6 +338,7 @@ public class BatteryMeterView extends LinearLayout implements
                         new ViewGroup.LayoutParams(
                                 LayoutParams.WRAP_CONTENT,
                                 LayoutParams.MATCH_PARENT));
+                reloadImage();
             }
             if (mTextColor != 0) mBatteryPercentView.setTextColor(mTextColor);
             updatePercentText();
