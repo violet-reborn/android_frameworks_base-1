@@ -306,6 +306,8 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             "system:" + Settings.System.QS_COLUMNS_LANDSCAPE;
     private static final String FP_SWIPE_TO_DISMISS_NOTIFICATIONS =
             Settings.Secure.FP_SWIPE_TO_DISMISS_NOTIFICATIONS;
+    private static final String PULSE_APPS_BLACKLIST =
+            "system:" + Settings.System.PULSE_APPS_BLACKLIST;
 
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
@@ -747,6 +749,7 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
         tunerService.addTunable(this, QS_COLUMNS_PORTRAIT);
         tunerService.addTunable(this, QS_COLUMNS_LANDSCAPE);
         tunerService.addTunable(this, FP_SWIPE_TO_DISMISS_NOTIFICATIONS);
+        tunerService.addTunable(this, PULSE_APPS_BLACKLIST);
 
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
@@ -1208,6 +1211,10 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             }
             mNavigationBarView = null;
         }
+    }
+
+    public NotificationMediaManager getMediaManager() {
+        return mMediaManager;
     }
 
     /**
@@ -5419,6 +5426,12 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
         return mVrMode;
     }
 
+    private void setPulseBlacklist() {
+        String blacklist = Settings.System.getStringForUser(mContext.getContentResolver(),
+                Settings.System.PULSE_APPS_BLACKLIST, UserHandle.USER_CURRENT);
+        getMediaManager().setPulseBlacklist(blacklist);
+    }
+
     private final BroadcastReceiver mBannerActionBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -5997,6 +6010,9 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             case FP_SWIPE_TO_DISMISS_NOTIFICATIONS:
                 mFpDismissNotifications =
                         newValue != null && Integer.parseInt(newValue) != 0;
+                break;
+            case PULSE_APPS_BLACKLIST:
+                setPulseBlacklist();
                 break;
             default:
                 break;

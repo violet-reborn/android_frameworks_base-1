@@ -102,4 +102,5 @@ interface IStatusBarService
     void hideFingerprintDialog();
 
     void toggleCameraFlash();
+    void leftInLandscapeChanged(boolean isLeft);
 }
