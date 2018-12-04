@@ -1498,8 +1498,6 @@ public class NotificationStackScrollLayout extends ViewGroup
         initView(getContext());
         updateWillNotDraw();
         updateBackgroundDimming();
-        updatePanelTranslation();
-        requestChildrenUpdate();
     }
 
     @Override
