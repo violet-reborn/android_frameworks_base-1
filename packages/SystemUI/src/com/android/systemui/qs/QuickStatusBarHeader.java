@@ -54,6 +54,7 @@ import com.android.systemui.R;
 import com.android.systemui.plugins.ActivityStarter;
 import com.android.systemui.qs.QSDetail.Callback;
 import com.android.systemui.statusbar.phone.PhoneStatusBarView;
+import com.android.systemui.statusbar.phone.StatusBarIconController;
 import com.android.systemui.statusbar.phone.StatusBarIconController.TintedIconManager;
 import com.android.systemui.statusbar.policy.Clock;
 import com.android.systemui.statusbar.phone.StatusIconContainer;
@@ -397,6 +398,7 @@ public class QuickStatusBarHeader extends RelativeLayout implements
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
+        Dependency.get(StatusBarIconController.class).addIconGroup(mIconManager);
         requestApplyInsets();
     }
 
@@ -419,6 +421,7 @@ public class QuickStatusBarHeader extends RelativeLayout implements
     @VisibleForTesting
     public void onDetachedFromWindow() {
         setListening(false);
+        Dependency.get(StatusBarIconController.class).removeIconGroup(mIconManager);
         super.onDetachedFromWindow();
     }
 
