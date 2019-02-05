@@ -117,6 +117,8 @@ public final class SubstratumService extends SystemService {
             new File(Environment.getDataSystemDirectory(), "theme");
     private static final File SYSTEM_THEME_CACHE_DIR = new File(SYSTEM_THEME_DIR, "cache");
     private static final File SYSTEM_THEME_FONT_DIR = new File(SYSTEM_THEME_DIR, "fonts");
+    private static final File SYSTEM_THEME_PREVIEW_CACHE_DIR = new File(SYSTEM_THEME_DIR,
+            "font_previews");
     private static final File SYSTEM_THEME_AUDIO_DIR = new File(SYSTEM_THEME_DIR, "audio");
     private static final File SYSTEM_THEME_RINGTONE_DIR =
             new File(SYSTEM_THEME_AUDIO_DIR, "ringtones");
@@ -182,20 +184,25 @@ public final class SubstratumService extends SystemService {
     @Override
     public void onBootPhase(int phase) {
         if (phase == PHASE_SYSTEM_SERVICES_READY) {
-            if (makeDir(SYSTEM_THEME_DIR)) {
-                restoreconThemeDir();
+            String cryptState = SystemProperties.get("vold.decrypt");
+            // wait until decrypted if we use FDE or just go one if not (cryptState will be empty then)
+            if (TextUtils.isEmpty(cryptState) || cryptState.equals("trigger_restart_framework")) {
+                if (makeDir(SYSTEM_THEME_DIR)) {
+                    makeDir(SYSTEM_THEME_PREVIEW_CACHE_DIR);
+                    restoreconThemeDir();
+                }
+
+                mContext.getContentResolver().registerContentObserver(
+                        Settings.Secure.getUriFor(Settings.Secure.FORCE_AUTHORIZE_SUBSTRATUM_PACKAGES),
+                        false, mObserver);
+                updateSettings();
+
+                mOm = IOverlayManager.Stub.asInterface(ServiceManager.getService("overlay"));
+                mPm = AppGlobals.getPackageManager();
+                publishBinderService("substratum", mService);
+
+                log("published substratum service");
             }
-
-            mContext.getContentResolver().registerContentObserver(
-                    Settings.Secure.getUriFor(Settings.Secure.FORCE_AUTHORIZE_SUBSTRATUM_PACKAGES),
-                    false, mObserver);
-            updateSettings();
-
-            mOm = IOverlayManager.Stub.asInterface(ServiceManager.getService("overlay"));
-            mPm = AppGlobals.getPackageManager();
-            publishBinderService("substratum", mService);
-
-            log("published substratum service");
         }
     }
 
@@ -706,6 +713,7 @@ public final class SubstratumService extends SystemService {
 
         // Copy target themed fonts zip to our cache dir
         Context themeContext = getAppContext(pid);
+        if (themeContext == null) return;
         AssetManager am = themeContext.getAssets();
         File fontZip = new File(cacheDir, zipFileName);
         try (InputStream inputStream = am.open("fonts/" + zipFileName)) {
@@ -786,6 +794,7 @@ public final class SubstratumService extends SystemService {
 
         // Copy target themed sounds zip to our cache dir
         Context themeContext = getAppContext(pid);
+        if (themeContext == null) return;
         AssetManager am = themeContext.getAssets();
         File soundsZip = new File(cacheDir, zipFileName);
         try (InputStream inputStream = am.open("audio/" + zipFileName)) {
