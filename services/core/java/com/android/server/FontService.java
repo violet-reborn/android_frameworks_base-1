@@ -48,7 +48,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
 import android.graphics.FontListParser;
@@ -82,7 +81,6 @@ public class FontService extends IFontService.Stub {
             "font_previews");
     private static final String FONTS_XML = "fonts.xml";
     private static final String FONT_IDENTIFIER = "custom_rom_font_provider";
-    private static final String SUBSTRATUM_INTENT = "projekt.substratum.THEME";
 
     private Context mContext;
     private FontHandler mFontHandler;
@@ -386,31 +384,12 @@ public class FontService extends IFontService.Stub {
     }
 
     private boolean isPackageFontProvider(String packageName) {
-        // check if the package res bool is set first
         Context appContext = getAppContext(packageName);
         if (appContext == null) return false;
         int id = appContext.getResources().getIdentifier(FONT_IDENTIFIER,
                 "bool",
                 appContext.getPackageName());
-        if (id != 0) {
-            return true;
-        }
-
-        // now check for Substratum package
-        // TODO: why resolve for ALL packages? Just analyze this package
-        List<ResolveInfo> subsPackages = new ArrayList<ResolveInfo>();
-        PackageManager pm = mContext.getPackageManager();
-        Intent i = new Intent(SUBSTRATUM_INTENT);
-        i.addCategory(Intent.CATEGORY_DEFAULT);
-        subsPackages.addAll(pm.queryIntentActivities(i,
-                PackageManager.GET_META_DATA));
-        for (ResolveInfo info : subsPackages) {
-            if (TextUtils.equals(info.activityInfo.packageName, packageName)) {
-                return true;
-            }
-        }
-        // bail out
-        return false;
+        return id != 0;
     }
 
     private List<String> getFontsFromPackage(String packageName) {
@@ -422,16 +401,6 @@ public class FontService extends IFontService.Stub {
         } catch (Exception e) {
             Log.e(TAG, appContext.getPackageName() + "did not have a fonts folder!");
         }
-
-        // remove Substratum preview files, only grap zips
-        List<String> previews = new ArrayList<String>();
-        for (String font : list) {
-            if (font.contains("preview") || !font.endsWith(".zip")) {
-                previews.add(font);
-            }
-        }
-        list.removeAll(previews);
-
         Log.v(TAG, packageName + " has the following fonts - " + list.toString());
         return list;
     }
@@ -501,7 +470,7 @@ public class FontService extends IFontService.Stub {
             } else {
                 copyFonts(info);
             }
-	        Intent intent = new Intent("com.android.server.ACTION_FONT_CHANGED");
+            Intent intent = new Intent("com.android.server.ACTION_FONT_CHANGED");
             intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
                         | Intent.FLAG_RECEIVER_FOREGROUND);
             mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
@@ -522,6 +491,9 @@ public class FontService extends IFontService.Stub {
         if (!created) {
             Log.e(TAG, "Could not create cache directory...");
         }
+
+        // Copy system fonts into our cache dir
+        copyDir("/system/fonts", cacheDir.getAbsolutePath());
 
         // Append zip to filename since it is probably removed
         // for list presentation
@@ -546,6 +518,17 @@ public class FontService extends IFontService.Stub {
         boolean deleted = fontZip.delete();
         if (!deleted) {
             Log.e(TAG, "Could not delete ZIP file");
+        }
+
+        // Check if theme zip included a fonts.xml. If not, get from existing file in /system
+        File srcConfig = new File("/system/etc/fonts.xml");
+        File dstConfig = new File(cacheDir, "fonts.xml");
+        if (!dstConfig.exists()) {
+            try {
+                FileUtils.copyFileOrThrow(srcConfig, dstConfig);
+            } catch (IOException e) {
+                Log.e(TAG, "There is an exception when trying to copy themed fonts", e);
+            }
         }
 
         // Prepare system theme fonts folder and copy new fonts folder from our cache
