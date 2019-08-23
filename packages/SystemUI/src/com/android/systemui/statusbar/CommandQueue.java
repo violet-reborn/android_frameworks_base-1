@@ -102,8 +102,8 @@ public class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_TOGGLE_PIE_ORIENTATION        = 52 << MSG_SHIFT;
     private static final int MSG_SET_AUTOROTATE_STATUS         = 53 << MSG_SHIFT;
     private static final int MSG_TOGGLE_SETTINGS_PANEL         = 100 << MSG_SHIFT;
-    private static final int MSG_SHOW_IN_DISPLAY_FINGERPRINT_VIEW = 47 << MSG_SHIFT;
-    private static final int MSG_HIDE_IN_DISPLAY_FINGERPRINT_VIEW = 48 << MSG_SHIFT;
+    private static final int MSG_SHOW_IN_DISPLAY_FINGERPRINT_VIEW = 54 << MSG_SHIFT;
+    private static final int MSG_HIDE_IN_DISPLAY_FINGERPRINT_VIEW = 55 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
