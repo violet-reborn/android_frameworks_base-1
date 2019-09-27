@@ -74,5 +74,15 @@ public class ThemeAccentUtils {
         "com.accents.twitterblue", // 46
         "com.accents.xboxgreen", // 47
         "com.accents.xiaomiorange", // 48
+        "com.google.android.apps.nexuslauncher.overlay",
     };
+
+    // Init core overlay
+    public static void initCoreOverlay(IOverlayManager om, int userId) {
+        try {
+            om.setEnabled("com.google.android.apps.nexuslauncher.overlay",
+                        true, userId);
+        } catch (RemoteException e) {
+        }
+    }
 }

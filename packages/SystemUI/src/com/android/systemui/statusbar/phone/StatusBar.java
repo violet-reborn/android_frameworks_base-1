@@ -781,6 +781,8 @@ public class StatusBar extends SystemUI implements DemoMode,
             ex.rethrowFromSystemServer();
         }
 
+        initCoreOverlays();
+
         createAndAddWindows(result);
 
         // Make sure we always have the most current wallpaper info.
@@ -3503,6 +3505,12 @@ public class StatusBar extends SystemUI implements DemoMode,
             Dependency.get(ConfigurationController.class).notifyThemeChanged();
         }
         updateCorners();
+    }
+
+    private void initCoreOverlays() {
+        mUiOffloadThread.submit(() -> {
+            ThemeAccentUtils.initCoreOverlay(mOverlayManager, mLockscreenUserManager.getCurrentUserId());
+        });
     }
 
     private void updateCorners() {
