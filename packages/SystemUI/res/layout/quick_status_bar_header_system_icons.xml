@@ -78,6 +78,35 @@
 
     </com.android.systemui.statusbar.LineageStatusBarItemHolder>
 
+    <LinearLayout
+        android:id="@+id/system_info_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical|end"
+        >
+
+        <ImageView
+            android:id="@+id/system_info_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:paddingEnd="1dp"
+        />
+
+        <TextView
+            android:id="@+id/system_info_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:singleLine="true"
+            android:paddingStart="@dimen/status_bar_clock_starting_padding"
+            android:paddingEnd="@dimen/status_bar_clock_end_padding"
+            android:textAppearance="@style/TextAppearance.StatusBar.Clock"
+            android:gravity="center_vertical|end"
+            android:visibility="gone"
+        />
+    </LinearLayout>
+
     <include layout="@layout/ongoing_privacy_chip" />
 
     </LinearLayout>

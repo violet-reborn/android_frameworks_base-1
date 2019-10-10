@@ -4722,6 +4722,12 @@ public final class Settings {
         public static final String BERRY_THEME_OVERRIDE = "berry_theme_override";
 
         /**
+         * Shows system info in QS OFF:0, CPU temp:1, battery temp:2, cpu speed: 3 , gpu clock: 4, gpu busy: 5
+         * @hide
+         */
+        public static final String QS_SYSTEM_INFO = "qs_system_info";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
