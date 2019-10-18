@@ -24,5 +24,16 @@ public class ThemeAccentUtils {
 
     public static final String TAG = "ThemeAccentUtils";
 
-    public static String[] AllPackages = {};
+    public static String[] AllPackages = {
+        "com.google.android.apps.nexuslauncher.overlay"
+    };
+
+    // Init core overlay
+    public static void initCoreOverlay(IOverlayManager om, int userId) {
+        try {
+            om.setEnabled("com.google.android.apps.nexuslauncher.overlay",
+                        true, userId);
+        } catch (RemoteException e) {
+        }
+    }
 }
