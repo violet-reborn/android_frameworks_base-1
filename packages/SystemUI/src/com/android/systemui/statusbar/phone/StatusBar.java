@@ -287,6 +287,8 @@ public class StatusBar extends SystemUI implements DemoMode,
             "system:" + Settings.System.QS_TILE_TITLE_VISIBILITY;
     private static final String SYSUI_ROUNDED_FWVALS =
             Settings.Secure.SYSUI_ROUNDED_FWVALS;
+    private static final String BERRY_ACCENT_PICKER =
+            "system:" + Settings.System.BERRY_ACCENT_PICKER;
 
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
@@ -575,6 +577,8 @@ public class StatusBar extends SystemUI implements DemoMode,
     private boolean mWereIconsJustHidden;
     private boolean mBouncerWasShowingWhenHidden;
 
+    private int mAccentSetting;
+
     // Notifies StatusBarKeyguardViewManager every time the keyguard transition is over,
     // this animation is tied to the scrim for historic reasons.
     // TODO: notify when keyguard has faded away instead of the scrim.
@@ -727,6 +731,7 @@ public class StatusBar extends SystemUI implements DemoMode,
         tunerService.addTunable(this, FORCE_SHOW_NAVBAR);
         tunerService.addTunable(this, QS_TILE_TITLE_VISIBILITY);
         tunerService.addTunable(this, SYSUI_ROUNDED_FWVALS);
+        tunerService.addTunable(this, BERRY_ACCENT_PICKER);
 
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
@@ -3449,6 +3454,13 @@ public class StatusBar extends SystemUI implements DemoMode,
         });
     }
 
+    private void updateAccent() {
+        mUiOffloadThread.submit(() -> {
+            ThemeAccentUtils.unloadAccents(mOverlayManager, mLockscreenUserManager.getCurrentUserId());
+            ThemeAccentUtils.updateAccents(mOverlayManager, mLockscreenUserManager.getCurrentUserId(), mAccentSetting);
+        });
+    }
+
     private void updateCorners() {
         if (mSysuiRoundedFwvals && !isCurrentRoundedSameAsFw()) {
             float density = Resources.getSystem().getDisplayMetrics().density;
@@ -4786,6 +4798,14 @@ public class StatusBar extends SystemUI implements DemoMode,
                 mSysuiRoundedFwvals =
                         TunerService.parseIntegerSwitch(newValue, true);
                 updateCorners();
+                break;
+            case BERRY_ACCENT_PICKER:
+                int accentSetting =
+                        TunerService.parseInteger(newValue, 0);
+                if (mAccentSetting != accentSetting) {
+                    mAccentSetting = accentSetting;
+                    updateAccent();
+                }
                 break;
             default:
                 break;
