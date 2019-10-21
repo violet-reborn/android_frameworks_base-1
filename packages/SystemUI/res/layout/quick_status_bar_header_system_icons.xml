@@ -89,9 +89,8 @@
         <ImageView
             android:id="@+id/system_info_icon"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="@dimen/status_bar_icon_size"
             android:visibility="gone"
-            android:paddingEnd="1dp"
         />
 
         <TextView
@@ -99,7 +98,6 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:singleLine="true"
-            android:paddingStart="@dimen/status_bar_clock_starting_padding"
             android:paddingEnd="@dimen/status_bar_clock_end_padding"
             android:textAppearance="@style/TextAppearance.StatusBar.Clock"
             android:gravity="center_vertical|end"
