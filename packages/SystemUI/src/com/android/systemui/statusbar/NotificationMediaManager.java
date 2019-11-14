@@ -125,7 +125,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
     private final Context mContext;
     private final MediaSessionManager mMediaSessionManager;
     private final ArrayList<MediaListener> mMediaListeners;
-    private final MediaArtworkProcessor mMediaArtworkProcessor;
     private final Set<AsyncTask<?, ?, ?>> mProcessArtworkTasks = new ArraySet<>();
 
     protected NotificationPresenter mPresenter;
@@ -184,7 +183,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             if (DEBUG_MEDIA) {
                 Log.v(TAG, "DEBUG_MEDIA: onMetadataChanged: " + metadata);
             }
-            mMediaArtworkProcessor.clearCache();
             mMediaMetadata = metadata;
             dispatchUpdateMediaMetaData(true /* changed */, true /* allowAnimation */);
         }
@@ -198,7 +196,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             NotificationEntryManager notificationEntryManager,
             MediaArtworkProcessor mediaArtworkProcessor) {
         mContext = context;
-        mMediaArtworkProcessor = mediaArtworkProcessor;
         mMediaListeners = new ArrayList<>();
         mMediaSessionManager
                 = (MediaSessionManager) mContext.getSystemService(Context.MEDIA_SESSION_SERVICE);
@@ -456,7 +453,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
     }
 
     private void clearCurrentMediaNotificationSession() {
-        mMediaArtworkProcessor.clearCache();
         mMediaMetadata = null;
         if (mMediaController != null) {
             if (DEBUG_MEDIA) {
@@ -706,10 +702,6 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             mBackdropFront.setImageDrawable(null);
         }
     };
-
-    private Bitmap processArtwork(Bitmap artwork) {
-        return mMediaArtworkProcessor.processArtwork(mContext, artwork);
-    }
 
     @MainThread
     private void removeTask(AsyncTask<?, ?, ?> task) {
